@@ -1,7 +1,8 @@
 import { useState } from "react";
 import Map, { Marker, Popup, NavigationControl } from "react-map-gl";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Layers } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
+import AlterationLayer from "./AlterationLayer";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -20,6 +21,7 @@ const SCORE_LABEL = (score) => {
 export default function SiteMap({ sites }) {
   const [selected, setSelected] = useState(null);
   const [filter, setFilter] = useState(0.0);
+  const [showAlteration, setShowAlteration] = useState(true);
 
   const filtered = sites.filter(s => s.score >= filter);
 
@@ -39,6 +41,19 @@ export default function SiteMap({ sites }) {
             value={filter}
             onChange={e => setFilter(parseFloat(e.target.value))}
           />
+        </div>
+
+        <div className="filter-row">
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={showAlteration}
+              onChange={e => setShowAlteration(e.target.checked)}
+              style={{ accentColor: "#EF9F27" }}
+            />
+            <Layers size={13} />
+            <span>Alteration heatmap</span>
+          </label>
         </div>
 
         <div className="site-list">
@@ -64,20 +79,27 @@ export default function SiteMap({ sites }) {
               </div>
             ))}
         </div>
+
+        <div className="legend">
+          <div className="legend-title"><Layers size={12} /> Alteration Signal</div>
+          <div className="legend-bar">
+            <div className="legend-gradient" />
+          </div>
+          <div className="legend-labels">
+            <span>Low</span><span>High</span>
+          </div>
+        </div>
       </div>
 
       <div className="map-area">
         <Map
-          initialViewState={{
-            longitude: 26.5,
-            latitude: -11.5,
-            zoom: 5.5,
-          }}
+          initialViewState={{ longitude: 26.5, latitude: -11.5, zoom: 5.5 }}
           style={{ width: "100%", height: "100%" }}
           mapStyle="mapbox://styles/mapbox/dark-v11"
           mapboxAccessToken={MAPBOX_TOKEN}
         >
           <NavigationControl position="top-right" />
+          <AlterationLayer visible={showAlteration} />
 
           {filtered.map(site => (
             <Marker
@@ -92,15 +114,10 @@ export default function SiteMap({ sites }) {
                 height: 40 + site.score * 20,
                 borderRadius: "50%",
                 background: SCORE_COLOR(site.score),
-                opacity: 0.85,
+                opacity: 0.9,
                 border: "2px solid white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                color: "white",
-                fontWeight: 700,
-                fontSize: 12,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "white", fontWeight: 700, fontSize: 12,
                 boxShadow: `0 0 12px ${SCORE_COLOR(site.score)}88`,
               }}>
                 {(site.score * 100).toFixed(0)}
@@ -110,12 +127,9 @@ export default function SiteMap({ sites }) {
 
           {selected && (
             <Popup
-              longitude={selected.lon}
-              latitude={selected.lat}
-              anchor="bottom"
-              onClose={() => setSelected(null)}
-              closeButton={true}
-              style={{ color: "#0d1117" }}
+              longitude={selected.lon} latitude={selected.lat}
+              anchor="bottom" onClose={() => setSelected(null)}
+              closeButton={true} style={{ color: "#0d1117" }}
             >
               <div style={{ padding: "4px 8px", minWidth: 180 }}>
                 <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 14 }}>
