@@ -3,7 +3,6 @@ Auto-annotator for geological NER training data.
 
 Uses regex patterns to create silver-standard annotations
 from the Kamoa-Kakula technical report text.
-These are used as the starting point for NER model training.
 
 Entity labels:
   ORE_GRADE     — "2.65% Cu", "grade of 2.82%"
@@ -21,8 +20,6 @@ import re
 from pathlib import Path
 
 
-# ── Entity patterns ───────────────────────────────────────────────────────────
-
 PATTERNS = {
     "ORE_GRADE": [
         r'\d+\.\d+\s*%\s*(?:Cu|copper|TCu|total copper)',
@@ -30,20 +27,34 @@ PATTERNS = {
         r'grading\s+\d+\.\d+\s*%',
         r'cut[- ]off\s+grade\s+of\s+\d+\.?\d*\s*%',
         r'\d+\.\d+\s*%\s*total\s+copper',
+        r'grade\s+of\s+\d+\.\d+\s*percent',
+        r'\d+\.\d+\s*percent\s+(?:Cu|copper)',
     ],
     "TONNAGE": [
-        r'\d[\d,\.]*\s*(?:billion|million)\s+tonnes?(?:\s+of\s+(?:ore|copper))?',
-        r'\d[\d,\.]*\s*(?:Mt|kt|Mt\s+of\s+ore)',
-        r'\d[\d,\.]*\s*million\s+metric\s+tonnes?',
+        r'\d[\d,]*(?:\.\d+)?\s*billion\s+tonnes?(?:\s+of\s+(?:ore|copper))?',
+        r'\d[\d,]*(?:\.\d+)?\s*million\s+tonnes?(?:\s+of\s+(?:ore|copper))?',
+        r'\d[\d,]*(?:\.\d+)?\s*million\s+metric\s+tonnes?',
+        r'\d[\d,]*(?:\.\d+)?\s*(?:Mt|kt)\b(?!\s*(?:%|Cu|copper))',
+        r'\d[\d,]*(?:\.\d+)?\s*Mtpa\b',
+        r'\d[\d,]*(?:\.\d+)?\s*million\s+tonne(?:\s+per\s+annum)?',
+        r'(?:approximately|about|over|around)\s+\d[\d,]*(?:\.\d+)?\s*(?:million|billion)\s+tonnes?',
+        r'\d[\d,]*(?:\.\d+)?\s*tonnes?\s+per\s+annum',
+        r'\d[\d,]*(?:\.\d+)?\s*tpa\b',
     ],
     "DEPOSIT": [
-        r'Kamoa[- ]Kakula',
-        r'Kamoa\s*[1-6]',
-        r'Kakula\s*(?:West|North|South)?',
-        r'Kansoko\s*(?:Sud|Nord)?',
+        r'Kamoa[–-]Kakula',
+        r'Kamoa\s+[1-6]',
         r'Kakula\s+West',
-        r'Makoko\s*(?:North|South)?',
+        r'Kakula\s+North',
+        r'Kakula\s+South',
+        r'Kansoko\s+Sud',
+        r'Kansoko\s+Nord',
+        r'Kansoko',
+        r'Kakula',
+        r'Makoko\s+(?:North|South)',
+        r'Makoko',
         r'Kirumba',
+        r'Kamoa',
     ],
     "DRILL_HOLE": [
         r'\bDD\d{3,4}[A-Z]?\b',
@@ -51,9 +62,10 @@ PATTERNS = {
         r'\bKMD[-_]\d+[A-Z]?\b',
     ],
     "DEPTH": [
-        r'\d+\.?\d*\s*m\b(?!\s*%)',
-        r'depth\s+of\s+\d+\.?\d*\s*(?:m|metres?|meters?)',
-        r'\d+\.?\d*\s*metres?\s+(?:below|depth|deep)',
+        r'\b\d+(?:\.\d+)?\s*m\b(?!\s*(?:%|Cu|copper|tpa|Mtpa))',
+        r'depth\s+of\s+\d+(?:\.\d+)?\s*(?:m|metres?|meters?)',
+        r'\d+(?:\.\d+)?\s*metres?\s+(?:below|depth|deep|thick|thickness)',
+        r'(?:between|from)\s+\d+(?:\.\d+)?\s*m\s+(?:and|to)\s+\d+(?:\.\d+)?\s*m',
     ],
     "MINERAL": [
         r'\bchalcopyrite\b',
@@ -67,44 +79,67 @@ PATTERNS = {
         r'\bpyrite\b',
         r'\bpyrrhotite\b',
         r'\bcobaltite\b',
+        r'\bcarrollite\b',
+        r'\bcubanite\b',
     ],
     "LOCATION": [
         r'\bDRC\b',
-        r'\bDemocratic Republic of (?:the )?Congo\b',
+        r'Democratic\s+Republic\s+of\s+(?:the\s+)?Congo',
         r'\bZambia\b',
         r'\bKolwezi\b',
         r'\bKatanga\b',
         r'\bLubumbashi\b',
-        r'\bKopje\b',
+        r'\bLualaba\b',
     ],
     "COST": [
-        r'\$\d+\.?\d*\/lb\.?',
-        r'\$\d+\.?\d*\s+per\s+(?:pound|tonne|lb)',
-        r'C1\s+(?:cost\s+)?of\s+\$\d+\.?\d*',
+        r'\$\d+(?:\.\d+)?\/lb\.?',
+        r'\$\d+(?:\.\d+)?\s+per\s+(?:pound|tonne|lb)',
+        r'C1\s+(?:cost\s+)?of\s+\$\d+(?:\.\d+)?',
+        r'cash\s+cost.*?\$\d+(?:\.\d+)?\/lb',
     ],
 }
 
 
+def _clean_for_annotation(text: str) -> str:
+    """
+    Remove newlines and extra whitespace within text before annotation.
+    This prevents span misalignment caused by mid-entity newlines.
+    """
+    # Replace newlines with space
+    text = re.sub(r'\n+', ' ', text)
+    # Collapse multiple spaces
+    text = re.sub(r' {2,}', ' ', text)
+    return text.strip()
+
+
+def _split_sentences(text: str) -> list[str]:
+    """Split cleaned text into sentences."""
+    # First clean newlines
+    text = _clean_for_annotation(text)
+    sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z])', text)
+    return [s.strip() for s in sentences if len(s.strip()) > 30]
+
+
 def annotate_text(text: str) -> list[dict]:
     """
-    Find all entity matches in text and return spaCy-format annotations.
-
-    Returns list of:
-    {
-        "text": "sentence text",
-        "entities": [(start, end, label), ...]
-    }
+    Find all entity matches and return spaCy-format annotations.
+    Text is cleaned (newlines removed) before annotation to prevent
+    span alignment issues.
     """
     sentences = _split_sentences(text)
     annotated = []
 
     for sent in sentences:
+        # Sentence is already newline-free from _split_sentences
         entities = []
         for label, patterns in PATTERNS.items():
             for pattern in patterns:
                 for match in re.finditer(pattern, sent, re.IGNORECASE):
                     start, end = match.start(), match.end()
-                    # Check for overlaps with existing entities
+                    # Skip if matched text contains newlines (safety check)
+                    if '\n' in sent[start:end]:
+                        continue
+                    # Skip if overlaps with existing entity
                     overlap = any(
                         not (end <= e[0] or start >= e[1])
                         for e in entities
@@ -121,18 +156,11 @@ def annotate_text(text: str) -> list[dict]:
     return annotated
 
 
-def _split_sentences(text: str) -> list[str]:
-    """Simple sentence splitter for geological text."""
-    sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z])', text)
-    return [s.strip() for s in sentences if len(s.strip()) > 30]
-
-
 def save_training_data(annotations: list[dict], output_path: str | Path) -> None:
     """Save annotations in spaCy v3 JSON training format."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # spaCy training format
     training_data = []
     for item in annotations:
         training_data.append({
