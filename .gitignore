@@ -69,3 +69,9 @@ azureml-logs/
 # Logs
 *.log
 logs/
+models/ner/best_model/ner/model
+models/ner/final_model/ner/model
+models/ner/best_model/vocab/vectors
+models/ner/final_model/vocab/vectors
+models/ner/best_model/vocab/lookups.bin
+models/ner/final_model/vocab/lookups.bin
