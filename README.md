@@ -1,151 +1,217 @@
 # GeoSample AI
 
-**AI-guided sample location optimizer for copper mineral exploration in Central and West Africa.**
+**AI-guided copper exploration sampling optimizer for Central/West Africa.**
 
-GeoSample AI ingests unstructured geological data — PDF drill reports, field notes, satellite imagery, and georeferenced deposit databases — and outputs a ranked heatmap of optimal sampling sites, before anyone touches the ground.
+GeoSample AI ingests unstructured geological data — NI 43-101 technical reports, drill logs, and Sentinel-2 satellite imagery — and outputs a ranked heatmap of optimal copper sampling sites. Built for mineral exploration teams who need to prioritize ground resources before a single drill bit turns.
+
+![GeoSample AI Dashboard](docs/dashboard_preview.png)
 
 ---
 
 ## What it does
 
-Junior mining companies spend $500K–$5M on exploration before knowing if a site is viable. Up to 70% of samples yield no actionable results. GeoSample AI cuts that waste by combining:
+A mining team uploads a technical report or pastes drill intercept text. GeoSample AI:
 
-- **NLP on NI 43-101 reports** — custom NER extracts mineral names, ore grades, coordinates, and depth values from hundreds of PDFs
-- **Sentinel-2 spectral analysis** — band ratio analysis on bands 11, 12, and 8A detects iron oxide and clay alteration zones associated with copper deposits
-- **Gradient Boosting scoring** — trained on known USGS deposit locations, outputs a 0–1 site viability score
-- **Ranked heatmap UI** — geologists see prioritized drill targets on an interactive map, with exportable reports
+1. **Extracts geological entities** — ore grades, deposit names, drill holes, depths, minerals, tonnages — using a custom spaCy NER model trained on 608 pages of real NI 43-101 data
+2. **Identifies geological themes** — via LDA topic modeling across 15 topics (Drilling & Geology, Mine Development, Metallurgical Testwork, Smelting, Environment, etc.)
+3. **Scores site viability** — LightGBM classifier combining 27 NER + LDA features, trained on 20 known Copperbelt copper deposits
+4. **Visualizes on a real map** — Mapbox dark map with scored site bubbles and a Sentinel-2 copper alteration heatmap overlay
+
+The Kamoa-Kakula 2026 Mineral Reserve and Resource Technical Report (the world's highest-grade copper development, published March 31 2026) scores **99.9% viability**.
 
 ---
 
 ## Architecture
-
 ```
-Data Sources        Processing           Intelligence         Platform
-─────────────       ──────────────       ─────────────        ────────────
-Sentinel-2      →   PDF/OCR          →   Custom NER       →   FastAPI
-USGS GDB        →   Text cleaning    →   Topic modeling   →   React dashboard
-NI 43-101 PDFs  →   Spectral bands   →   GBM scorer       →   Enterprise API
-Copperbelt DB   →   Data Lake        →   Azure ML         →   Auth (Azure AD)
-Field notes     →                    →                    →
-```
-
----
-
-## Project structure
-
-```
-geosample-ai/
-├── data/
-│   ├── raw/                    # Source data, never modified
-│   │   ├── sentinel2/          # Sentinel-2 GeoTIFF tiles
-│   │   ├── usgs_geodatabase/   # USGS Africa mineral .gdb files
-│   │   ├── ni43101_reports/    # NI 43-101 PDF technical reports
-│   │   ├── copperbelt_db/      # USGS Copperbelt deposit CSV/GDB
-│   │   └── field_notes/        # Unstructured field note text
-│   ├── processed/              # Cleaned, transformed outputs
-│   │   ├── vectors/            # GeoJSON deposit locations
-│   │   ├── rasters/            # Processed band ratio GeoTIFFs
-│   │   └── text/               # Extracted and cleaned report text
-│   └── features/               # ML-ready feature matrices
-├── src/
-│   ├── ingestion/              # Data downloaders and loaders
-│   ├── processing/
-│   │   ├── nlp/                # PDF extraction, cleaning, tokenization
-│   │   └── spectral/           # Sentinel-2 band analysis
-│   ├── intelligence/
-│   │   ├── ner/                # Custom spaCy NER model
-│   │   ├── topic_modeling/     # LDA across reports
-│   │   └── scoring/            # GBM site viability model
-│   └── platform/
-│       ├── api/                # FastAPI backend
-│       └── dashboard/          # React frontend
-├── notebooks/                  # Exploratory analysis and demos
-├── models/                     # Trained model artifacts
-│   ├── ner/
-│   ├── topic/
-│   └── scoring/
-├── configs/                    # YAML configuration files
-├── scripts/                    # One-off utility scripts
-├── tests/
-│   ├── unit/
-│   └── integration/
-└── docs/                       # Architecture docs and API reference
+NI 43-101 PDFs          Sentinel-2 Imagery       USGS Deposit Data
+      │                        │                        │
+      ▼                        ▼                        ▼
+ PDF Extractor           Band Analysis           Deposit Registry
+ (PyMuPDF + OCR)        (B11/B12/B8A SWIR)      (20 known sites)
+      │                        │                        │
+      └──────────────┬──────────┘                       │
+                     ▼                                  │
+              Text Cleaner                              │
+                     │                                  │
+          ┌──────────┴──────────┐                       │
+          ▼                     ▼                       │
+      NER Model            LDA Model                    │
+   (spaCy, 8 labels)    (Gensim, 15 topics)             │
+          │                     │                       │
+          └──────────┬──────────┘                       │
+                     ▼                                  │
+              Feature Matrix                            │
+              (27 features)           ◄─────────────────┘
+                     │
+                     ▼
+           LightGBM Scorer
+           (CV AUC: 0.841)
+                     │
+                     ▼
+              FastAPI Backend ──► React Dashboard
+              (6 endpoints)         (Mapbox + heatmap)
 ```
 
 ---
 
-## Quickstart
+## NER Model Performance
 
+Trained on Kamoa-Kakula 2026 MRE (608 pages, 1.17M characters):
+
+| Entity | F1 | Examples |
+|---|---|---|
+| DEPOSIT | 0.98 | Kamoa-Kakula, Kakula West, Kansoko Sud |
+| MINERAL | 1.00 | chalcopyrite, bornite, chalcocite |
+| LOCATION | 1.00 | DRC, Zambia, Kolwezi, Lualaba |
+| DRILL_HOLE | 0.92 | DD1080, DD1724 |
+| DEPTH | 0.89 | 450m, 12.5m |
+| ORE_GRADE | 0.88 | 3.94% Cu, 2.53% TCu |
+| TONNAGE | 0.82 | 523 million tonnes, 17 Mtpa |
+| COST | 1.00 | $2.60/lb |
+
+---
+
+## Data Sources
+
+| Source | Description | Access |
+|---|---|---|
+| Kamoa-Kakula 2026 MRE | 608-page NI 43-101 technical report, March 31 2026 | Free via SEDAR+ |
+| Digital Earth Africa STAC | Sentinel-2 L2A imagery, bands B11/B12/B8A | Free, no auth |
+| USGS Copperbelt Deposits | 20 known DRC/Zambia copper deposits | Curated from literature |
+
+---
+
+## Stack
+
+**ML/Data:** Python, spaCy, Gensim, LightGBM, scikit-learn, SHAP, rasterio, odc-stac, rioxarray
+
+**Backend:** FastAPI, Uvicorn, PyMuPDF
+
+**Frontend:** React, Mapbox GL, react-map-gl, Vite, Axios
+
+**Infrastructure:** GitHub Actions CI (ruff + pytest), pre-commit hooks
+
+---
+
+## Setup
+
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- Mapbox account (free tier)
+
+### Backend
 ```bash
-# Clone
-git clone https://github.com/gsatyabrata99/geosample-ai.git
+git clone https://github.com/gsatyabrata99/geosample-ai
 cd geosample-ai
-
-# Set up environment
-python -m venv .venv
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Configure credentials
-cp configs/credentials.example.yaml configs/credentials.yaml
-# Edit credentials.yaml with your Copernicus and Azure keys
+# Train models (or skip — pre-trained weights included for config/metadata)
+python src/intelligence/ner/annotator.py
+python src/intelligence/ner/train.py
+python src/intelligence/topic_modeling/lda.py
+python src/intelligence/scoring/retrain_with_deposits.py
 
-# Download raw data
-python scripts/download_all.py
-
-# Run the pipeline
-python scripts/run_pipeline.py --region drc --output data/features/
+# Start API
+python -m uvicorn src.platform.api.main:app --reload --port 8000
 ```
 
----
-
-## Data sources
-
-| Source | Format | License | Access |
-|--------|--------|---------|--------|
-| [Sentinel-2 L2A (Digital Earth Africa)](https://registry.opendata.aws/deafrica-sentinel-2/) | GeoTIFF | Open | Free, no auth |
-| [USGS Africa Mineral Geodatabase](https://data.usgs.gov/datacatalog/data/USGS:607611a9d34e018b3201cbbf) | Esri GDB / Shapefile | Public domain | Free download |
-| [USGS Copperbelt Database](https://pubs.usgs.gov/publication/sir20105090J) | CSV / GDB | Public domain | Free download |
-| [NI 43-101 Technical Reports](https://www.sedar.com) | PDF | Public filing | Free (SEDAR) |
-| Field notes | TXT / CSV | Proprietary | Client-provided |
-
----
-
-## Development
-
+### Frontend
 ```bash
-# Install dev dependencies
-pip install -r requirements-dev.txt
+cd src/platform/dashboard
+npm install
+cp .env.example .env
+# Add your Mapbox token to .env
+npm run dev
+```
 
-# Run tests
-pytest tests/
+Open `http://localhost:5173`
 
-# Lint
-ruff check src/
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Model status (NER/GBM/LDA) |
+| POST | `/predict` | Score geological text (~6ms) |
+| POST | `/predict/batch` | Score multiple text blocks |
+| POST | `/reports/analyze` | Upload and analyze PDF report |
+| GET | `/sites` | Ranked site list with scores |
+| GET | `/model/info` | NER labels, feature importance |
+
+### Example
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Drill hole DD1080 intersected 12.5m at 3.94% Cu from 450m depth in the Kakula deposit. Chalcopyrite and bornite are the primary ore minerals. The indicated resource is 523 million tonnes at 2.53% Cu."
+  }'
+```
+
+Returns:
+```json
+{
+  "viability_score": 0.9991,
+  "entities": [
+    {"text": "DD1080", "label": "DRILL_HOLE"},
+    {"text": "3.94% Cu", "label": "ORE_GRADE"},
+    {"text": "450m", "label": "DEPTH"},
+    {"text": "Kakula", "label": "DEPOSIT"},
+    {"text": "chalcopyrite", "label": "MINERAL"},
+    {"text": "523 million tonnes", "label": "TONNAGE"}
+  ],
+  "top_topics": [
+    {"label": "Drilling & Geology", "probability": 0.561},
+    {"label": "Mine Development", "probability": 0.400}
+  ],
+  "processing_time_ms": 6.59
+}
 ```
 
 ---
 
-## Roadmap
+## Results
 
-- [x] Repository structure and data source validation
-- [ ] Data ingestion scripts (Sentinel-2, USGS, NI 43-101)
-- [ ] NLP pipeline (PDF extraction, NER training, LDA)
-- [ ] Spectral analysis (band ratios, alteration mapping)
-- [ ] GBM scoring model
-- [ ] FastAPI backend
-- [ ] React dashboard with Mapbox heatmap
-- [ ] Azure deployment (Azure ML, Azure AD, Azure Data Lake)
-- [ ] Enterprise API and webhook integration
+- **Kamoa-Kakula 2026 MRE** → 99.9% viability (world's highest-grade copper development)
+- **NER overall F1** → 0.994 on test set
+- **LDA coherence** → 0.61 (c_v), 15 topics
+- **GBM CV AUC** → 0.841 (trained on real Copperbelt deposit locations)
+- **API latency** → ~6ms per prediction
 
 ---
 
-## Academic context
-
-This project was initiated as part of CIS 8045 (Unstructured Data Management) at Georgia State University, Spring 2026, and is being developed into a production-grade enterprise product.
+## Project Structure
+```
+geosample-ai/
+├── src/
+│   ├── ingestion/          # Sentinel-2, USGS, NI 43-101 PDF loaders
+│   ├── processing/         # Text cleaning, spectral band analysis
+│   ├── intelligence/       # NER, LDA, GBM scorer
+│   └── platform/
+│       ├── api/            # FastAPI backend
+│       └── dashboard/      # React frontend
+├── models/
+│   ├── ner/                # Trained spaCy NER model
+│   ├── topic/              # LDA model + document-topic matrix
+│   └── scoring/            # LightGBM + scaler + feature importance
+├── data/
+│   ├── raw/                # Source data (gitignored)
+│   └── processed/          # NER annotations, cleaned text
+├── configs/                # Pipeline parameters
+└── scripts/                # Download and run scripts
+```
 
 ---
 
-## License
+## Academic Context
 
-MIT License — see [LICENSE](LICENSE)
+Built as the capstone project for CIS 8045 (Advanced Data Analytics) at Georgia State University, MS Information Systems (AI & Data-Driven Analytics), Spring 2026.
+
+---
+
+## Author
+
+**Ganesh Satyabrata** — AI/ML Product Manager  
+[github.com/gsatyabrata99](https://github.com/gsatyabrata99) · [linkedin.com/in/ganeshs99](https://linkedin.com/in/ganeshs99)
