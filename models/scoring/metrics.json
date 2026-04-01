@@ -1,9 +1,8 @@
 {
-  "cv_roc_auc_mean": 1.0,
-  "cv_roc_auc_std": 0.0,
+  "cv_roc_auc_mean": 0.8407211538461539,
+  "cv_roc_auc_std": 0.3032511365998691,
   "roc_auc": 1.0,
-  "avg_precision": 1.0,
+  "positive_rate": 0.0182370820668693,
   "n_samples": 329,
-  "n_features": 27,
-  "positive_rate": 0.015197568389057751
+  "label_source": "real_deposit_mentions"
 }

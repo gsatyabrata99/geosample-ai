@@ -11,6 +11,7 @@ Endpoints:
 """
 
 from __future__ import annotations
+import numpy as np
 
 import logging
 import time
@@ -361,7 +362,29 @@ async def analyze_report(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF extraction failed: {e}")
 
-    score, features, entities, topics = score_text(text)
+    # Score in chunks and take max — model trained on 500-word chunks
+    words = text.split()
+    chunk_size = 500
+    chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, min(len(words), 10000), chunk_size)]
+    
+    chunk_scores = []
+    all_entities = []
+    best_topics = []
+    best_features = {}
+    
+    for chunk in chunks[:20]:  # max 20 chunks
+        s, f, e, t = score_text(chunk)
+        chunk_scores.append(s)
+        all_entities.extend(e)
+        if s > max(chunk_scores[:-1], default=0):
+            best_topics = t
+            best_features = f
+    
+    score = float(np.max(chunk_scores)) if chunk_scores else 0.0
+    features = best_features
+    entities = all_entities
+    topics = best_topics
+
     entity_summary = {}
     for ent in entities:
         entity_summary.setdefault(ent.label, []).append(ent.text)
