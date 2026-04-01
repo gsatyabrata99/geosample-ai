@@ -305,3 +305,74 @@ async def predict(input: TextInput):
 async def predict_batch(input: BatchTextInput):
     """Score multiple text blocks in one request."""
     t0 = time.time
+
+
+@app.get("/model/info", response_model=ModelInfoResponse)
+async def model_info():
+    """Return model metadata and feature importance."""
+    ner_labels = list(_ner_model.get_pipe("ner").labels) if _ner_model else []
+    lda_topics = _lda_model.num_topics if _lda_model else 0
+
+    top_features = []
+    importance_path = Path("models/scoring/feature_importance.csv")
+    if importance_path.exists():
+        import pandas as pd
+        df = pd.read_csv(importance_path)
+        top_features = df.head(10).to_dict(orient="records")
+
+    return ModelInfoResponse(
+        ner_labels=ner_labels,
+        lda_num_topics=lda_topics,
+        gbm_features=_feature_names or [],
+        top_features=top_features,
+    )
+
+
+@app.get("/sites")
+async def get_sites(min_score: float = 0.5, limit: int = 20):
+    """Return top-scored sites."""
+    sample_sites = [
+        {"site_id": "DRC-001", "lat": -10.7, "lon": 25.5, "score": 0.94,
+         "deposit": "Kamoa-Kakula zone", "grade_pct": 2.65},
+        {"site_id": "DRC-002", "lat": -10.9, "lon": 25.3, "score": 0.87,
+         "deposit": "Kakula West extension", "grade_pct": 2.1},
+        {"site_id": "DRC-003", "lat": -10.5, "lon": 25.8, "score": 0.82,
+         "deposit": "Kamoa 3 target", "grade_pct": 1.8},
+        {"site_id": "ZMB-001", "lat": -12.5, "lon": 28.2, "score": 0.76,
+         "deposit": "Kansanshi extension", "grade_pct": 1.4},
+        {"site_id": "ZMB-002", "lat": -13.1, "lon": 27.9, "score": 0.71,
+         "deposit": "Lumwana fringe", "grade_pct": 0.9},
+    ]
+    filtered = [s for s in sample_sites if s["score"] >= min_score][:limit]
+    return {"sites": filtered, "count": len(filtered)}
+
+
+@app.post("/reports/analyze")
+async def analyze_report(file: UploadFile = File(...)):
+    """Upload a PDF and get viability analysis."""
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    try:
+        import fitz, io
+        content = await file.read()
+        doc = fitz.open(stream=content, filetype="pdf")
+        text = "\n".join(page.get_text() for page in doc)
+        doc.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF extraction failed: {e}")
+
+    score, features, entities, topics = score_text(text)
+    entity_summary = {}
+    for ent in entities:
+        entity_summary.setdefault(ent.label, []).append(ent.text)
+
+    return {
+        "filename": file.filename,
+        "viability_score": round(score, 4),
+        "text_length": len(text),
+        "entity_summary": {k: list(set(v))[:10] for k, v in entity_summary.items()},
+        "top_topics": topics,
+        "key_features": {k: round(v, 4) if isinstance(v, float) else v
+                         for k, v in features.items()
+                         if not k.startswith("topic_") and v != 0},
+    }
