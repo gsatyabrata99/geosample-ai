@@ -160,3 +160,37 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); font
 .predict-left { overflow-y: auto; }
 .predict-right { overflow-y: auto; }
 .model-stats { height: calc(100vh - 110px); overflow-y: auto; }
+
+/* Upload panel */
+.upload-panel { display: flex; height: 100%; }
+.upload-left { flex: 1; padding: 20px; overflow-y: auto; border-right: 1px solid var(--border); }
+.upload-right { width: 340px; min-width: 340px; padding: 20px; overflow-y: auto; }
+.upload-desc { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+
+.drop-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 32px;
+  text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 14px; }
+.drop-zone:hover, .drop-zone.dragging { border-color: var(--teal); background: var(--teal-light)11; }
+.drop-zone.has-file { border-color: var(--teal); border-style: solid; }
+.drop-prompt { display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--muted); }
+.drop-prompt p { font-size: 13px; }
+.drop-sub { font-size: 11px !important; }
+.file-selected { display: flex; align-items: center; gap: 12px; }
+.file-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.file-size { font-size: 11px; color: var(--muted); }
+
+.progress-msg { display: flex; align-items: center; gap: 8px; margin-top: 10px;
+  font-size: 12px; color: var(--muted); }
+
+.entity-summary { margin-top: 20px; }
+.entity-group { display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border)66; }
+.entity-label-chip { padding: 2px 8px; border-radius: 10px; font-size: 11px;
+  font-weight: 600; border: 1px solid; white-space: nowrap; min-width: 90px;
+  text-align: center; }
+.entity-values { display: flex; flex-wrap: wrap; gap: 4px; }
+.entity-value { padding: 2px 6px; background: var(--surface2); border-radius: 4px;
+  font-size: 11px; color: var(--text); }
+.entity-more { font-size: 11px; color: var(--muted); padding: 2px 6px; }
+.score-meta { display: flex; justify-content: space-between; margin-top: 8px;
+  font-size: 11px; color: var(--muted); }

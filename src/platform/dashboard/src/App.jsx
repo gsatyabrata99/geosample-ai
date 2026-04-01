@@ -4,6 +4,7 @@ import { MapPin, Activity, FileText, Cpu, TrendingUp, AlertCircle } from "lucide
 import SiteMap from "./components/SiteMap";
 import PredictionPanel from "./components/PredictionPanel";
 import ModelStats from "./components/ModelStats";
+import ReportUpload from "./components/ReportUpload";
 import "./App.css";
 
 const API = "http://localhost:8000";
@@ -31,6 +32,7 @@ export default function App() {
   const tabs = [
     { id: "map", label: "Site Map", icon: MapPin },
     { id: "predict", label: "Analyze Text", icon: FileText },
+    { id: "upload", label: "Upload Report", icon: FileText },
     { id: "model", label: "Model Info", icon: Cpu },
   ];
 
@@ -81,6 +83,7 @@ export default function App() {
           <>
             {activeTab === "map" && <SiteMap sites={sites} />}
             {activeTab === "predict" && <PredictionPanel api={API} />}
+            {activeTab === "upload" && <ReportUpload api={API} />}
             {activeTab === "model" && <ModelStats modelInfo={modelInfo} health={health} />}
           </>
         )}
