@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { MapPin, TrendingUp, Layers } from "lucide-react";
+import Map, { Marker, Popup, NavigationControl } from "react-map-gl";
+import { TrendingUp } from "lucide-react";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const SCORE_COLOR = (score) => {
   if (score >= 0.85) return "#1D9E75";
@@ -48,10 +52,7 @@ export default function SiteMap({ sites }) {
               >
                 <div className="site-card-header">
                   <span className="site-id">{site.site_id}</span>
-                  <span
-                    className="score-pill"
-                    style={{ background: SCORE_COLOR(site.score) }}
-                  >
+                  <span className="score-pill" style={{ background: SCORE_COLOR(site.score) }}>
                     {(site.score * 100).toFixed(0)}%
                   </span>
                 </div>
@@ -66,87 +67,77 @@ export default function SiteMap({ sites }) {
       </div>
 
       <div className="map-area">
-        {/* Map placeholder — replace with Mapbox once token is configured */}
-        <div className="map-placeholder">
-          <div className="map-overlay">
-            <Layers size={40} opacity={0.3} />
-            <p>Central African Copperbelt</p>
-            <p className="map-sub">DRC · Zambia · {filtered.length} sites plotted</p>
-          </div>
+        <Map
+          initialViewState={{
+            longitude: 26.5,
+            latitude: -11.5,
+            zoom: 5.5,
+          }}
+          style={{ width: "100%", height: "100%" }}
+          mapStyle="mapbox://styles/mapbox/dark-v11"
+          mapboxAccessToken={MAPBOX_TOKEN}
+        >
+          <NavigationControl position="top-right" />
 
-          {/* SVG pseudo-map showing site positions */}
-          <svg viewBox="0 0 600 400" className="pseudo-map">
-            <rect width="600" height="400" fill="#1a2332" />
-            {/* Grid lines */}
-            {[0,1,2,3,4,5].map(i => (
-              <line key={`h${i}`} x1="0" y1={i*80} x2="600" y2={i*80}
-                stroke="#ffffff10" strokeWidth="1" />
-            ))}
-            {[0,1,2,3,4,5,6,7].map(i => (
-              <line key={`v${i}`} x1={i*100} y1="0" x2={i*100} y2="400"
-                stroke="#ffffff10" strokeWidth="1" />
-            ))}
+          {filtered.map(site => (
+            <Marker
+              key={site.site_id}
+              longitude={site.lon}
+              latitude={site.lat}
+              anchor="center"
+              onClick={e => { e.originalEvent.stopPropagation(); setSelected(site); }}
+            >
+              <div style={{
+                width: 40 + site.score * 20,
+                height: 40 + site.score * 20,
+                borderRadius: "50%",
+                background: SCORE_COLOR(site.score),
+                opacity: 0.85,
+                border: "2px solid white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "white",
+                fontWeight: 700,
+                fontSize: 12,
+                boxShadow: `0 0 12px ${SCORE_COLOR(site.score)}88`,
+              }}>
+                {(site.score * 100).toFixed(0)}
+              </div>
+            </Marker>
+          ))}
 
-            {/* Site markers — positions derived from lat/lon */}
-            {filtered.map((site, i) => {
-              const x = ((site.lon - 24) / 6) * 500 + 50;
-              const y = ((site.lat + 8) / 8) * -300 + 350;
-              const r = 8 + site.score * 12;
-              return (
-                <g key={site.site_id} onClick={() => setSelected(site)}
-                   style={{ cursor: "pointer" }}>
-                  <circle cx={x} cy={y} r={r + 4}
-                    fill={SCORE_COLOR(site.score)} opacity={0.2} />
-                  <circle cx={x} cy={y} r={r}
-                    fill={SCORE_COLOR(site.score)} opacity={0.9} />
-                  <text x={x} y={y + 1} textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize="8" fill="white" fontWeight="bold">
-                    {(site.score * 100).toFixed(0)}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Labels */}
-            <text x="30" y="20" fill="#ffffff60" fontSize="10">DRC</text>
-            <text x="480" y="380" fill="#ffffff60" fontSize="10">Zambia</text>
-          </svg>
-        </div>
-
-        {selected && (
-          <div className="site-detail">
-            <div className="detail-header">
-              <strong>{selected.site_id}</strong>
-              <span
-                className="score-pill large"
-                style={{ background: SCORE_COLOR(selected.score) }}
-              >
-                {(selected.score * 100).toFixed(0)}% Viable
-              </span>
-            </div>
-            <div className="detail-body">
-              <div className="detail-row">
-                <span>Deposit</span>
-                <strong>{selected.deposit}</strong>
+          {selected && (
+            <Popup
+              longitude={selected.lon}
+              latitude={selected.lat}
+              anchor="bottom"
+              onClose={() => setSelected(null)}
+              closeButton={true}
+              style={{ color: "#0d1117" }}
+            >
+              <div style={{ padding: "4px 8px", minWidth: 180 }}>
+                <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 14 }}>
+                  {selected.site_id}
+                  <span style={{
+                    marginLeft: 8, padding: "2px 8px", borderRadius: 10,
+                    background: SCORE_COLOR(selected.score),
+                    color: "white", fontSize: 11, fontWeight: 700,
+                  }}>
+                    {(selected.score * 100).toFixed(0)}%
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: "#444", marginBottom: 4 }}>{selected.deposit}</div>
+                <div style={{ fontSize: 12 }}>Grade: <strong>{selected.grade_pct}% Cu</strong></div>
+                <div style={{ fontSize: 12 }}>Viability: <strong style={{ color: SCORE_COLOR(selected.score) }}>{SCORE_LABEL(selected.score)}</strong></div>
+                <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>
+                  {selected.lat.toFixed(4)}, {selected.lon.toFixed(4)}
+                </div>
               </div>
-              <div className="detail-row">
-                <span>Cu Grade</span>
-                <strong>{selected.grade_pct}%</strong>
-              </div>
-              <div className="detail-row">
-                <span>Coordinates</span>
-                <strong>{selected.lat.toFixed(3)}, {selected.lon.toFixed(3)}</strong>
-              </div>
-              <div className="detail-row">
-                <span>Viability</span>
-                <strong style={{ color: SCORE_COLOR(selected.score) }}>
-                  {SCORE_LABEL(selected.score)}
-                </strong>
-              </div>
-            </div>
-          </div>
-        )}
+            </Popup>
+          )}
+        </Map>
       </div>
     </div>
   );
