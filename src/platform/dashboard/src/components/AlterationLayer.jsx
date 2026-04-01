@@ -24,8 +24,11 @@ export default function AlterationLayer({ visible }) {
         id="alteration-layer"
         type="raster"
         paint={{
-          "raster-opacity": 0.6,
+          "raster-opacity": 0.45,
           "raster-fade-duration": 300,
+          "raster-brightness-min": 0.05,
+          "raster-contrast": 0.3,
+          "raster-saturation": 0.5,
         }}
       />
     </Source>
