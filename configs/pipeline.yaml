@@ -1,0 +1,33 @@
+# pipeline.yaml — main configuration for GeoSample AI pipeline
+
+region:
+  name: "Central African Copperbelt"
+  bbox: [21.0, -15.0, 30.0, -6.0]   # [min_lon, min_lat, max_lon, max_lat] — DRC/Zambia
+  epsg: 32735                         # UTM Zone 35S
+
+sentinel2:
+  collection: "s2_l2a"
+  stac_endpoint: "https://explorer.digitalearth.africa/stac"
+  bands: ["B11", "B12", "B8A"]       # SWIR bands for alteration detection
+  cloud_cover_max: 20                 # percent
+  date_range:
+    start: "2022-01-01"
+    end: "2024-12-31"
+  resolution: 20                      # metres
+
+nlp:
+  pdf_dpi: 300
+  ocr_language: "eng"
+  min_text_length: 100               # chars — skip near-empty pages
+  ner_model: "models/ner/geosample_ner"
+  lda_num_topics: 15
+  lda_passes: 10
+
+scoring:
+  model_path: "models/scoring/gbm_viability.pkl"
+  score_threshold: 0.6               # sites below this are filtered from output
+  n_top_sites: 50                    # max sites returned per concession
+
+output:
+  format: "geojson"                  # geojson | shapefile | csv
+  heatmap_resolution: 0.01           # degrees per grid cell (~1km)
