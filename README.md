@@ -207,7 +207,7 @@ geosample-ai/
 
 ## Academic Context
 
-Built as the capstone project for CIS 8045 (Advanced Data Analytics) at Georgia State University, MS Information Systems (AI & Data-Driven Analytics), Spring 2026.
+Built as project for CIS 8045 (Advanced Data Analytics) at Georgia State University, MS Information Systems (AI & Data-Driven Analytics), Spring 2026.
 
 ---
 
