@@ -1,0 +1,233 @@
+{
+  "num_topics": 15,
+  "coherence_score": 0.6098320718585002,
+  "corpus_size": 329,
+  "dictionary_size": 3391,
+  "topics": {
+    "0": {
+      "words": [
+        "concentrate",
+        "feed",
+        "circuit",
+        "grade",
+        "scavenger",
+        "cleaner",
+        "high",
+        "tailings",
+        "flotation",
+        "ppm"
+      ],
+      "label": "Assaying"
+    },
+    "1": {
+      "words": [
+        "heat",
+        "ventilation",
+        "support",
+        "air",
+        "mine",
+        "rock",
+        "split",
+        "sets",
+        "spacing",
+        "ring"
+      ],
+      "label": "Geotechnics"
+    },
+    "2": {
+      "words": [
+        "power",
+        "mine",
+        "substation",
+        "underground",
+        "distribution",
+        "supply",
+        "substations",
+        "kcs",
+        "demand",
+        "drc"
+      ],
+      "label": "Mine Design"
+    },
+    "3": {
+      "words": [
+        "grade",
+        "recovery",
+        "tcu",
+        "domain",
+        "grades",
+        "model",
+        "samples",
+        "vertical",
+        "dip",
+        "deposit"
+      ],
+      "label": "Drilling"
+    },
+    "4": {
+      "words": [
+        "mining",
+        "mineral_reserve",
+        "mine",
+        "costs",
+        "mineral_reserves",
+        "estimates",
+        "geotechnical",
+        "cost",
+        "economic",
+        "deposits"
+      ],
+      "label": "Economics"
+    },
+    "5": {
+      "words": [
+        "mine",
+        "water",
+        "capacity",
+        "infrastructure",
+        "plant",
+        "plan",
+        "pump",
+        "transfer",
+        "dewatering",
+        "underground"
+      ],
+      "label": "Mine Design"
+    },
+    "6": {
+      "words": [
+        "mining",
+        "esia",
+        "studies",
+        "mine",
+        "information",
+        "geotechnical",
+        "date",
+        "impact",
+        "could",
+        "assessment"
+      ],
+      "label": "Geotechnics"
+    },
+    "7": {
+      "words": [
+        "mining",
+        "drc",
+        "environmental",
+        "closure",
+        "monitoring",
+        "exploitation",
+        "social",
+        "surface",
+        "management",
+        "code"
+      ],
+      "label": "Environment"
+    },
+    "8": {
+      "words": [
+        "slag",
+        "gas",
+        "furnace",
+        "concentrate",
+        "plant",
+        "anode",
+        "smelter",
+        "scf",
+        "acid",
+        "dbf"
+      ],
+      "label": "Metallurgy"
+    },
+    "9": {
+      "words": [
+        "rock",
+        "geotechnical",
+        "mass",
+        "data",
+        "conditions",
+        "mining",
+        "laboratory",
+        "ground",
+        "summary",
+        "testing"
+      ],
+      "label": "Geotechnics"
+    },
+    "10": {
+      "words": [
+        "west",
+        "mine",
+        "infrastructure",
+        "ventilation",
+        "production",
+        "east",
+        "equipment",
+        "plan",
+        "typical",
+        "mining"
+      ],
+      "label": "Economics"
+    },
+    "11": {
+      "words": [
+        "mining",
+        "production",
+        "development",
+        "mine",
+        "ore",
+        "access",
+        "ventilation",
+        "surface",
+        "orebody",
+        "areas"
+      ],
+      "label": "Mine Design"
+    },
+    "12": {
+      "words": [
+        "samples",
+        "sample",
+        "test",
+        "work",
+        "flotation",
+        "phase",
+        "pfs",
+        "concentrate",
+        "composite",
+        "grade"
+      ],
+      "label": "Assaying"
+    },
+    "13": {
+      "words": [
+        "yes",
+        "mineralization",
+        "core",
+        "drillholes",
+        "drilling",
+        "diamictite",
+        "mineral_resource",
+        "sampling",
+        "siltstone",
+        "west"
+      ],
+      "label": "Drilling"
+    },
+    "14": {
+      "words": [
+        "tests",
+        "number",
+        "sdt",
+        "ssl",
+        "maximum",
+        "mean",
+        "deviation",
+        "standard",
+        "minimum",
+        "ucs"
+      ],
+      "label": "General"
+    }
+  }
+}
