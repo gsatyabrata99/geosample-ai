@@ -333,16 +333,27 @@ async def model_info():
 async def get_sites(min_score: float = 0.5, limit: int = 20):
     """Return top-scored sites."""
     sample_sites = [
-        {"site_id": "DRC-001", "lat": -10.7, "lon": 25.5, "score": 0.94,
-         "deposit": "Kamoa-Kakula zone", "grade_pct": 2.65},
-        {"site_id": "DRC-002", "lat": -10.9, "lon": 25.3, "score": 0.87,
-         "deposit": "Kakula West extension", "grade_pct": 2.1},
-        {"site_id": "DRC-003", "lat": -10.5, "lon": 25.8, "score": 0.82,
-         "deposit": "Kamoa 3 target", "grade_pct": 1.8},
-        {"site_id": "ZMB-001", "lat": -12.5, "lon": 28.2, "score": 0.76,
-         "deposit": "Kansanshi extension", "grade_pct": 1.4},
-        {"site_id": "ZMB-002", "lat": -13.1, "lon": 27.9, "score": 0.71,
-         "deposit": "Lumwana fringe", "grade_pct": 0.9},
+        {"site_id": "DRC-001", "lat": -10.737, "lon": 25.497, "score": 0.999,
+         "deposit": "Kamoa-Kakula 2026 MRE", "grade_pct": 2.86,
+         "commodity": "Copper", "country": "DRC", "report": "Ivanhoe Mines NI 43-101 Mar 2026"},
+        {"site_id": "TUR-001", "lat": 41.083, "lon": 40.917, "score": 0.995,
+         "deposit": "First Quantum Cayeli", "grade_pct": 3.2,
+         "commodity": "Copper-Zinc", "country": "Turkey", "report": "FQM Cayeli Tech Report Oct 2025"},
+        {"site_id": "DRC-002", "lat": -10.583, "lon": 26.083, "score": 0.982,
+         "deposit": "Kazhiba Copper Project", "grade_pct": 2.1,
+         "commodity": "Copper", "country": "DRC", "report": "MMA Kazhiba NI 43-101 2020"},
+        {"site_id": "ARG-001", "lat": -28.917, "lon": -69.583, "score": 0.965,
+         "deposit": "Aldebaran Rio Grande", "grade_pct": 0.45,
+         "commodity": "Copper-Gold", "country": "Argentina", "report": "Centauri-Aldebaran NI 43-101 Apr 2026"},
+        {"site_id": "CAN-001", "lat": 49.917, "lon": -75.583, "score": 0.309,
+         "deposit": "Kenorland Frotet", "grade_pct": 0.0,
+         "commodity": "Gold", "country": "Canada", "report": "Sumitomo-Kenorland Frotet NI 43-101 Jan 2026"},
+        {"site_id": "CAN-002", "lat": 56.75, "lon": -130.083, "score": 0.116,
+         "deposit": "Skeena Eskay Creek", "grade_pct": 0.0,
+         "commodity": "Gold-Silver", "country": "Canada", "report": "Skeena Eskay Creek Tech Report Dec 2023"},
+        {"site_id": "CAN-003", "lat": 48.583, "lon": -79.083, "score": 0.075,
+         "deposit": "Estrades PEA", "grade_pct": 0.0,
+         "commodity": "Zinc-Gold", "country": "Canada", "report": "Estrades PEA 2026"},
     ]
     filtered = [s for s in sample_sites if s["score"] >= min_score][:limit]
     return {"sites": filtered, "count": len(filtered)}

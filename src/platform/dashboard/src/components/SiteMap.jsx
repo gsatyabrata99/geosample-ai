@@ -7,14 +7,14 @@ import AlterationLayer from "./AlterationLayer";
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const SCORE_COLOR = (score) => {
-  if (score >= 0.85) return "#1D9E75";
-  if (score >= 0.70) return "#EF9F27";
+  if (score >= 0.70) return "#1D9E75";
+  if (score >= 0.40) return "#EF9F27";
   return "#D85A30";
 };
 
 const SCORE_LABEL = (score) => {
-  if (score >= 0.85) return "High";
-  if (score >= 0.70) return "Moderate";
+  if (score >= 0.70) return "High";
+  if (score >= 0.40) return "Medium";
   return "Low";
 };
 
@@ -57,7 +57,7 @@ export default function SiteMap({ sites }) {
         </div>
 
         <div className="site-list">
-          {filtered
+          {[...filtered]
             .sort((a, b) => b.score - a.score)
             .map(site => (
               <div
@@ -73,7 +73,7 @@ export default function SiteMap({ sites }) {
                 </div>
                 <div className="site-deposit">{site.deposit}</div>
                 <div className="site-meta">
-                  <span>{site.grade_pct}% Cu</span>
+                  <span>{site.commodity}</span>
                   <span className="viability-label">{SCORE_LABEL(site.score)}</span>
                 </div>
               </div>
@@ -81,9 +81,10 @@ export default function SiteMap({ sites }) {
         </div>
 
         <div className="legend">
-          <div className="legend-title"><Layers size={12} /> Alteration Signal</div>
+          <div className="legend-title"><Layers size={12} /> Viability Score</div>
           <div className="legend-bar">
-            <div className="legend-gradient" />
+            <div style={{height:"100%", borderRadius:"4px",
+              background:"linear-gradient(to right, #D85A30, #EF9F27, #1D9E75)"}} />
           </div>
           <div className="legend-labels">
             <span>Low</span><span>High</span>
@@ -93,7 +94,7 @@ export default function SiteMap({ sites }) {
 
       <div className="map-area">
         <Map
-          initialViewState={{ longitude: 26.5, latitude: -11.5, zoom: 5.5 }}
+          initialViewState={{ longitude: 0, latitude: 20, zoom: 1.5 }}
           style={{ width: "100%", height: "100%" }}
           mapStyle="mapbox://styles/mapbox/dark-v11"
           mapboxAccessToken={MAPBOX_TOKEN}
@@ -110,14 +111,14 @@ export default function SiteMap({ sites }) {
               onClick={e => { e.originalEvent.stopPropagation(); setSelected(site); }}
             >
               <div style={{
-                width: 40 + site.score * 20,
-                height: 40 + site.score * 20,
+                width: 36 + site.score * 16,
+                height: 36 + site.score * 16,
                 borderRadius: "50%",
                 background: SCORE_COLOR(site.score),
                 opacity: 0.9,
                 border: "2px solid white",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "white", fontWeight: 700, fontSize: 12,
+                cursor: "pointer", color: "white", fontWeight: 700, fontSize: 11,
                 boxShadow: `0 0 12px ${SCORE_COLOR(site.score)}88`,
               }}>
                 {(site.score * 100).toFixed(0)}
@@ -131,9 +132,9 @@ export default function SiteMap({ sites }) {
               anchor="bottom" onClose={() => setSelected(null)}
               closeButton={true} style={{ color: "#0d1117" }}
             >
-              <div style={{ padding: "4px 8px", minWidth: 180 }}>
+              <div style={{ padding: "4px 8px", minWidth: 200 }}>
                 <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 14 }}>
-                  {selected.site_id}
+                  {selected.deposit}
                   <span style={{
                     marginLeft: 8, padding: "2px 8px", borderRadius: 10,
                     background: SCORE_COLOR(selected.score),
@@ -142,11 +143,18 @@ export default function SiteMap({ sites }) {
                     {(selected.score * 100).toFixed(0)}%
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: "#444", marginBottom: 4 }}>{selected.deposit}</div>
-                <div style={{ fontSize: 12 }}>Grade: <strong>{selected.grade_pct}% Cu</strong></div>
+                <div style={{ fontSize: 12, color: "#444", marginBottom: 4 }}>
+                  {selected.commodity} · {selected.country}
+                </div>
+                {selected.grade_pct > 0 && (
+                  <div style={{ fontSize: 12 }}>Grade: <strong>{selected.grade_pct}% Cu</strong></div>
+                )}
                 <div style={{ fontSize: 12 }}>Viability: <strong style={{ color: SCORE_COLOR(selected.score) }}>{SCORE_LABEL(selected.score)}</strong></div>
-                <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>
-                  {selected.lat.toFixed(4)}, {selected.lon.toFixed(4)}
+                {selected.report && (
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>{selected.report}</div>
+                )}
+                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
+                  {selected.lat.toFixed(3)}, {selected.lon.toFixed(3)}
                 </div>
               </div>
             </Popup>
