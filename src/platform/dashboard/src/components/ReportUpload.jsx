@@ -163,6 +163,16 @@ export default function ReportUpload({ api }) {
       <div className="upload-right">
         {result ? (
           <>
+            {result.commodity_warning && (
+              <div style={{
+                background: '#3d2a00', border: '1px solid #EF9F27',
+                borderRadius: 8, padding: '10px 14px', marginBottom: 14,
+                fontSize: 12, color: '#EF9F27', lineHeight: 1.5
+              }}>
+                ⚠️ <strong>{result.commodity}</strong> report detected.
+                Viability score reflects geological data density, not copper-specific potential.
+              </div>
+            )}
             {/* Score */}
             <div className="score-card">
               <div className="score-label">Viability Score</div>

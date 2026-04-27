@@ -117,7 +117,29 @@ export default function PredictionPanel({ api }) {
       <div className="predict-right">
         {result ? (
           <>
-            <div className="score-card">
+            {result.commodity_warning && (
+          <div style={{
+            background: '#3d2a00', border: '1px solid #EF9F27',
+            borderRadius: 8, padding: '10px 14px', marginBottom: 14,
+            fontSize: 12, color: '#EF9F27', lineHeight: 1.5
+          }}>
+            ⚠️ <strong>{result.commodity}</strong> report detected.{' '}
+            {result.commodity_warning}
+          </div>
+        )}
+        <div className="score-card">
+              <div style={{display:'flex', justifyContent:'center', gap:8, marginBottom:8}}>
+                <span style={{padding:'2px 10px', borderRadius:10, fontSize:11, fontWeight:600,
+                  background: result.is_copper ? '#1D9E751a' : '#EF9F271a',
+                  color: result.is_copper ? '#1D9E75' : '#EF9F27',
+                  border: `1px solid ${result.is_copper ? '#1D9E75' : '#EF9F27'}44`}}>
+                  {result.commodity}
+                </span>
+                <span style={{padding:'2px 10px', borderRadius:10, fontSize:11,
+                  background:'#ffffff11', color:'#7d8590'}}>
+                  {(result.commodity_confidence * 100).toFixed(0)}% confidence
+                </span>
+              </div>
               <div className="score-label">Viability Score</div>
               <div className="score-value" style={{ color: scoreColor(result.viability_score) }}>
                 {(result.viability_score * 100).toFixed(1)}%

@@ -18,6 +18,7 @@ import time
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from src.intelligence.scoring.commodity_classifier import classify_commodity
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -107,6 +108,10 @@ class EntitySpan(BaseModel):
 
 class PredictionResponse(BaseModel):
     viability_score: float = Field(..., ge=0.0, le=1.0)
+    commodity: str
+    is_copper: bool
+    commodity_confidence: float
+    commodity_warning: str | None
     entities: list[EntitySpan]
     top_topics: list[dict]
     features: dict
@@ -290,8 +295,13 @@ async def predict(input: TextInput):
         log.error(f"Prediction failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+    commodity = classify_commodity(input.text)
     return PredictionResponse(
         viability_score=round(score, 4),
+        commodity=commodity.primary_commodity,
+        is_copper=commodity.is_copper,
+        commodity_confidence=commodity.confidence,
+        commodity_warning=commodity.warning,
         entities=entities,
         top_topics=topics,
         features={k: round(v, 4) if isinstance(v, float) else v
