@@ -76,3 +76,4 @@ models/ner/final_model/vocab/vectors
 models/ner/best_model/vocab/lookups.bin
 models/ner/final_model/vocab/lookups.bin
 src/platform/dashboard/.env
+*.pdf
