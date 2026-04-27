@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { MapPin, Activity, FileText, Cpu, TrendingUp, AlertCircle } from "lucide-react";
+import { MapPin, Activity, FileText, Cpu, TrendingUp, AlertCircle, BarChart2 } from "lucide-react";
 import SiteMap from "./components/SiteMap";
 import PredictionPanel from "./components/PredictionPanel";
 import ModelStats from "./components/ModelStats";
 import ReportUpload from "./components/ReportUpload";
+import ReportComparison from "./components/ReportComparison";
 import "./App.css";
 
 const API = "http://localhost:8000";
@@ -33,6 +34,7 @@ export default function App() {
     { id: "map", label: "Site Map", icon: MapPin },
     { id: "predict", label: "Analyze Text", icon: FileText },
     { id: "upload", label: "Upload Report", icon: FileText },
+    { id: "compare", label: "Compare Reports", icon: BarChart2 },
     { id: "model", label: "Model Info", icon: Cpu },
   ];
 
@@ -84,6 +86,7 @@ export default function App() {
             {activeTab === "map" && <SiteMap sites={sites} />}
             {activeTab === "predict" && <PredictionPanel api={API} />}
             {activeTab === "upload" && <ReportUpload api={API} />}
+            {activeTab === "compare" && <ReportComparison api={API} />}
             {activeTab === "model" && <ModelStats modelInfo={modelInfo} health={health} />}
           </>
         )}
